@@ -1,0 +1,139 @@
+User
+-listenToBlockchainUpdate
+    -if blockchain is larger than current blockchain, replace the blockchain
+    -hash(last block) should start with 3 zeroes
+-state: amount, privateKey, publickey, user_list, user_num
+-init(user_num, amount)
+    -stores amount in state
+    -stores user_num in state
+    -generates private and public keys and stores them
+-createTransaction
+    -receiver = randomly pick a user [rec_num, rec_pid]
+    -amount = randomly pick amount<= the amount in state
+    -sender = self() = [sen_num, sen_pid]
+    -message = [[rec_num, rec_pid], amount, [sen_num, sen_pid]]
+    -signMessage(message)
+-signMessage
+    -??
+
+Miner
+-state: pendingTransactions, blockchain
+-listen to transaction
+    -add to pendingTransactions
+    -once he gets >= five transactions
+    -block = createBlock (contains transaction, prevHash and a new number such that hash starts with 3 zeroes)
+    -if block is not nil
+        -blockchain = blockchain ++ createBlock
+        -cast broadcast(blockchain, user_pid_list)
+    -listen to transaction
+-broadcast(blockchain, [pid | pid_list])
+    -cast pid.listenToBlockchainUpdate(blockchain)
+    -cast broadcast(blockchain, pid_list)
+-broadcast(blockchain, [])
+    -nil
+-createBlock(listOfTransactions)
+    -prev = hash(last of blockchain)
+    -nonce = generateNonce([prev, listOfTransactions, 0])
+    -if nonce is nil
+        -return nil
+    -else
+        -return [prev, listOfTransactions, nonce]
+-generateNonce([prev, listOfTransactions, num])
+    -if num>=100000000000
+        -return nil
+    -else if(hash([prev, listOfTransactions, num])) starts with 3 zeroes
+        -return [prev, listOfTransactions, num]
+    -else
+        -generateNonce([prev, listOfTransactions, num+1])
+
+supervisor
+-create 10 miners and start processes
+-create 90 users and start the processes
+-call 10 miners to have [{miner_num: pid}] list and [{user_num:pid} list]
+-call 90 users to have [{miner_num: pid}] list and [{user_num:pid} list]
+-call 90 users to start transactions
+-wait until 10 transactions
+-print each user and the amount they have and the blockchain with transaction IDs only in form: [1,2]->[3,4]->[5,6]->[7,8]->[9,10]
+
+1st version
+-1st 10 are miners, next 90 are users
+-miners are selfless. no amount recived by miners
+-users do random transactions
+-users only do valid transactions (within amounts that they have)
+-no verification done since users themselves do transactions
+-every user broadcasts transactions only once
+-if none of the miners are able to find a hash starting with 3 zeroes, transaction is lost
+-we assume there will be no fail, miners always able to find hash, users negate cost the moment they do transaction
+-transaction always valid and will always be in blockchain
+-every miner takes every transaction
+
+Plan:
+1. create supervisor, user and miner - done
+2. both users and miners should have user and miner maps - done
+3. each user should start with amount 100 - done
+4. each user should have private key and public key - done
+5. each user should have a copy of blockchain (list of objects) - done
+6. each miner should have a copy of blockchain (list of objects) - done
+7. each miner should start with empty list of pendingTransactions
+pendingTransactions stored in supervisor - done
+user updates to supervisor for every transaction - done
+miners request from supervisor for every transaction - done
+pending_transactions:
+[
+    {
+        id: "abc,
+        sender: 1,
+        reciever: 2,
+        anount: 30
+    },
+    {
+        id: "def,
+        sender: 1,
+        reciever: 2,
+        amount: 20
+    },
+    {}
+]
+10. each miner adds the incoming messages to pendingTransactions - done
+11. miner creates block after recieving five transactions - done
+13. user listen to any blockchain update - done
+14. miner listen to any blockchain update - done
+15. supervisor listen to any blockchain update - done
+17. send blockchain to all miners - done
+18. send blockchain to all users - done
+19. send blockchain to supervisor - done
+supervisor picks one user sender and another user reciever and calls sender to make transaction. global transaction ID is in supervisor's state. - done
+if sender's amount is >= requested transaction, then sender makes transaction. transaction has ID of global transaction ID. - done
+sender's amount is cut already - done
+sender tells the supervisor about the transaction - done
+supervisor adds the transaction to pending_transactions - done
+whenever next miner mines that transaction, it is removed from the pending_transactions - done
+supervisor checks the diff in pending_transactions and the updated_transactions and resolves the transactions (adds amount to each reciever) - done
+sender asks rec to validate (jugaad) - done
+miner starts generating nonce - done
+after valid nonce, miner creates block by converting all the block items to string - done
+miner adds the miner_num and then hashing it and getting a number that would make the hash start with 2 zeroes - done
+supervisor starts bitcoin with 10000 doscoins - done
+after successful generation, miner adds block to the most recent valid blockchain - done
+transaction id is timestamp <> ":" <> "11 sends 2 DOSCoins to 12"" - done
+supervisor starts and makes genesis transaction and waits indefinitely - done
+test case to test the genesis transaction - first block contents - done
+test case checks whether hash is proper - done
+test case checks whether nonce is properly generated by miner - done
+test case checks valid block check - done
+
+test case makes a valid transaction and checks if rec validates transaction is printed
+test case makes invalid transaction and checks if rec rejected transaction is printed
+test case makes a valid transaction and checks if rec gets the amount
+test case makes a valid transaction and checks if transaction is added to blockchain by looping through the data part of each block of the blockchain
+test case makes a valid transaction and checks that the new block added has the correct prev_hash
+test case makes a valid transaction and checks that the new block added has the correct hash
+test case makes 5 valid transactions and checks if miner gets the amount
+test case makes 5 valid transactions and checks that blockchain is updated with valid block (hash of last block starts with 2 zeroes)
+sender creates transaction by hashing with private key and adds "signature"
+add a cap to nonce
+rec validates transaction by using sender's public key, signature in the transaction and adds to the pending_transactions
+transactionList should be hashed to merkle_root when creating block
+sender signs using private key
+rec validates with public key of the sender
+when user adds to the system, there is transaction from user0 or some existing user to new user and the blockchain is updated
