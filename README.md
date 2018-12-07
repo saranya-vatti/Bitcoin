@@ -1,4 +1,4 @@
-# Proj4
+# Bitcoin
 
 ## Group members
 
